@@ -23,6 +23,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     List<User> findByIsDeletedTrue();
     
+    List<User> findByRoleAndIsDeletedFalse(User.Role role);
+    
     @Query("SELECT u FROM User u WHERE u.role = :role AND u.location LIKE %:location%")
     List<User> findProvidersByLocation(@Param("role") User.Role role, @Param("location") String location);
     

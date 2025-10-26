@@ -103,6 +103,16 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* View Insights Button */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate('/admin/insights')}
+            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-4 rounded-lg transition duration-200 text-lg shadow-lg"
+          >
+            📊 View Insights
+          </button>
+        </div>
+
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* User Management */}

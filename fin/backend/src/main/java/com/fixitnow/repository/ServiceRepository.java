@@ -25,6 +25,8 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
     
     List<Service> findByIsDeletedTrue();
     
+    List<Service> findByIsActiveTrueAndIsDeletedFalse();
+    
     Optional<Service> findByIdAndIsActiveTrue(Long id);
     
     Page<Service> findByProviderIdAndIsActiveTrue(Long providerId, Pageable pageable);

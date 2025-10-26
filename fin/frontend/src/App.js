@@ -28,6 +28,7 @@ import AdminRegister from './pages/AdminRegister';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminServices from './pages/AdminServices';
+import AdminInsights from './pages/AdminInsights';
 
 const queryClient = new QueryClient();
 
@@ -187,6 +188,14 @@ function App() {
                   element={
                     <ProtectedRoute adminOnly={true}>
                       <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/insights"
+                  element={
+                    <ProtectedRoute adminOnly={true}>
+                      <AdminInsights />
                     </ProtectedRoute>
                   }
                 />
