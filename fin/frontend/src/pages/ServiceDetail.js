@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useChat } from '../contexts/ChatContext';
 import apiService from '../services/apiService';
 import toast from 'react-hot-toast';
 
@@ -8,6 +9,7 @@ const ServiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { startConversation } = useChat();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -48,6 +50,29 @@ const ServiceDetail = () => {
       return;
     }
     navigate(`/book/${id}`);
+  };
+
+  const handleContactProvider = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (!service?.provider?.id) {
+      toast.error('Provider information not available');
+      return;
+    }
+
+    try {
+      await startConversation(service.provider.id, null, {
+        otherUserName: service.provider?.name,
+        otherUser: service.provider,
+      });
+      toast.success('Chat opened! Send a message to contact the provider.');
+    } catch (error) {
+      console.error('Failed to start conversation:', error);
+      toast.error('Failed to open chat. Please try again.');
+    }
   };
 
   const handleGoBack = () => {
@@ -238,7 +263,10 @@ const ServiceDetail = () => {
               >
                 Book Now
               </button>
-              <button className="btn-outline w-full py-3">
+              <button 
+                onClick={handleContactProvider}
+                className="btn-outline w-full py-3"
+              >
                 Contact Provider
               </button>
             </div>

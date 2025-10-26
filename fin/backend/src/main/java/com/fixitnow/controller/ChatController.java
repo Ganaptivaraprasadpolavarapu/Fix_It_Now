@@ -20,7 +20,7 @@ import com.fixitnow.dto.MessageDTO;
 import com.fixitnow.service.ChatService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/messages")
 @CrossOrigin(origins = "*")
 public class ChatController {
 
@@ -28,7 +28,7 @@ public class ChatController {
     private ChatService chatService;
 
     // Get conversations for a user
-    @GetMapping("/messages/conversations/{userId}")
+    @GetMapping("/conversations/{userId}")
     public ResponseEntity<List<ConversationDTO>> getConversations(@PathVariable Long userId) {
         try {
             List<ConversationDTO> conversations = chatService.getConversationsForUser(userId);
@@ -42,7 +42,7 @@ public class ChatController {
     }
 
     // Get messages between two users (conversation)
-    @GetMapping("/messages/conversation/{conversationId}")
+    @GetMapping("/conversation/{conversationId}")
     public ResponseEntity<List<MessageDTO>> getConversationMessages(@PathVariable String conversationId) {
         // Parse conversation ID (format: "userId1-userId2")
         String[] userIds = conversationId.split("-");
@@ -58,7 +58,7 @@ public class ChatController {
     }
 
     // Send a message
-    @PostMapping("/messages")
+    @PostMapping
     public ResponseEntity<MessageDTO> sendMessage(@RequestBody Map<String, Object> request) {
         try {
             Long senderId = Long.valueOf(request.get("senderId").toString());
@@ -75,7 +75,7 @@ public class ChatController {
     }
 
     // Mark messages as read
-    @PostMapping("/messages/mark-read")
+    @PostMapping("/mark-read")
     public ResponseEntity<Void> markMessagesAsRead(@RequestBody Map<String, Long> request) {
         Long senderId = request.get("senderId");
         Long receiverId = request.get("receiverId");
@@ -85,7 +85,7 @@ public class ChatController {
     }
 
     // Get unread message count
-    @GetMapping("/messages/unread-count")
+    @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Integer>> getUnreadCount(
             @RequestParam Long senderId, 
             @RequestParam Long receiverId) {

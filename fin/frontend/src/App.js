@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { ChatProvider } from './contexts/ChatContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import ChatMessageModal from './components/ChatMessageModal';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -41,6 +43,7 @@ const LayoutWrapper = ({ children }) => {
     <>
       {!isAdminRoute && <Navbar />}
       {children}
+      {!isAdminRoute && <ChatMessageModal />}
     </>
   );
 };
@@ -49,11 +52,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <div className="App">
-            <LayoutWrapper>
-              <main className="min-h-screen bg-gray-50">
-              <Routes>
+        <ChatProvider>
+          <Router>
+            <div className="App">
+              <LayoutWrapper>
+                <main className="min-h-screen bg-gray-50">
+                <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -205,6 +209,7 @@ function App() {
             <Toaster position="top-right" />
           </div>
         </Router>
+        </ChatProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

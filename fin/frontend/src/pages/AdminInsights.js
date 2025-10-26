@@ -3,6 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 const AdminInsights = () => {
   const navigate = useNavigate();
@@ -30,6 +43,58 @@ const AdminInsights = () => {
   const handleLogout = () => {
     logout();
     navigate('/admin-login');
+  };
+
+  const exportToCSV = () => {
+    try {
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      // Prepare data for CSV
+      const csvData = [];
+      
+      // Add metrics
+      csvData.push(['Analytics Report', timestamp]);
+      csvData.push([]);
+      csvData.push(['KEY METRICS']);
+      csvData.push(['Metric', 'Value']);
+      csvData.push(['Total Bookings', analytics.metrics?.totalBookings || 0]);
+      csvData.push(['Total Revenue', analytics.metrics?.totalRevenue || 0]);
+      csvData.push(['Active Services', analytics.metrics?.activeServices || 0]);
+      csvData.push(['Average Rating', analytics.metrics?.avgRating?.toFixed(2) || 'N/A']);
+      
+      csvData.push([]);
+      csvData.push(['TOP SERVICES']);
+      csvData.push(['Service Title', 'Booking Count']);
+      (analytics.topServices || []).forEach(service => {
+        csvData.push([service.title, service.bookingCount]);
+      });
+      
+      csvData.push([]);
+      csvData.push(['TOP PROVIDERS']);
+      csvData.push(['Provider Name', 'Rating', 'Bookings', 'Total Earnings']);
+      (analytics.topProviders || []).forEach(provider => {
+        csvData.push([provider.name, provider.avgRating.toFixed(2), provider.bookingCount, provider.totalEarnings]);
+      });
+      
+      csvData.push([]);
+      csvData.push(['LOCATION TRENDS']);
+      csvData.push(['Location', 'Booking Count']);
+      (analytics.locationTrends || []).forEach(location => {
+        csvData.push([location.location, location.bookingCount]);
+      });
+      
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet(csvData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Analytics');
+      
+      // Download
+      XLSX.writeFile(wb, `Analytics_Report_${timestamp}.xlsx`);
+      toast.success('Analytics exported to Excel!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export analytics');
+    }
   };
 
   if (loading) {
@@ -90,10 +155,6 @@ const AdminInsights = () => {
     );
   }
 
-  const maxBookings = Math.max(...(analytics.topServices || []).map(s => s.bookingCount || 0), 1);
-  const maxProviderBookings = Math.max(...(analytics.topProviders || []).map(p => p.bookingCount || 0), 1);
-  const maxLocationBookings = Math.max(...(analytics.locationTrends || []).map(l => l.bookingCount || 0), 1);
-
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Navbar */}
@@ -119,7 +180,17 @@ const AdminInsights = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8">📊 Analytics Dashboard</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800">📊 Analytics Dashboard</h2>
+          <div className="flex gap-4">
+            <button
+              onClick={exportToCSV}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition flex items-center gap-2"
+            >
+              📥 Export to Excel
+            </button>
+          </div>
+        </div>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -155,26 +226,22 @@ const AdminInsights = () => {
         {/* Top Services */}
         <div className="bg-white rounded-lg shadow p-6 mb-12">
           <h3 className="text-2xl font-bold text-gray-800 mb-6">🏆 Most Booked Services</h3>
-          <div className="space-y-4">
-            {(analytics.topServices || []).map((service, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="w-32 text-sm font-medium text-gray-700 truncate">
-                  {service.title}
-                </div>
-                <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
-                  <div
-                    className="bg-blue-500 h-full flex items-center justify-end pr-3 transition-all"
-                    style={{ width: `${(service.bookingCount / maxBookings) * 100}%` }}
-                  >
-                    {service.bookingCount > 0 && (
-                      <span className="text-white text-sm font-semibold">{service.bookingCount}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="w-12 text-right text-sm text-gray-600">{service.bookingCount}</div>
-              </div>
-            ))}
-          </div>
+          {(analytics.topServices || []).length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analytics.topServices || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="title" angle={-45} textAnchor="end" height={100} interval={0} />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [`${value} bookings`, 'Count']}
+                  contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
+                />
+                <Bar dataKey="bookingCount" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center text-gray-500 py-8">No service data available</div>
+          )}
         </div>
 
         {/* Top Providers */}
@@ -213,26 +280,31 @@ const AdminInsights = () => {
         {/* Location Trends */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-2xl font-bold text-gray-800 mb-6">📍 Location Trends</h3>
-          <div className="space-y-4">
-            {(analytics.locationTrends || []).map((location, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="w-32 text-sm font-medium text-gray-700 truncate">
-                  {location.location}
-                </div>
-                <div className="flex-1 bg-gray-200 rounded-full h-8 relative overflow-hidden">
-                  <div
-                    className="bg-green-500 h-full flex items-center justify-end pr-3 transition-all"
-                    style={{ width: `${(location.bookingCount / maxLocationBookings) * 100}%` }}
-                  >
-                    {location.bookingCount > 0 && (
-                      <span className="text-white text-sm font-semibold">{location.bookingCount}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="w-12 text-right text-sm text-gray-600">{location.bookingCount}</div>
-              </div>
-            ))}
-          </div>
+          {(analytics.locationTrends || []).length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={analytics.locationTrends || []}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="location" />
+                <YAxis />
+                <Tooltip 
+                  formatter={(value) => [`${value} bookings`, 'Count']}
+                  contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="bookingCount" 
+                  stroke="#10b981" 
+                  strokeWidth={3}
+                  dot={{ fill: '#10b981', r: 5 }}
+                  activeDot={{ r: 7 }}
+                  name="Bookings"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center text-gray-500 py-8">No location data available</div>
+          )}
         </div>
       </div>
     </div>

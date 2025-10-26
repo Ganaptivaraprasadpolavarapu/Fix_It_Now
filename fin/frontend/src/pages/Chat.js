@@ -378,7 +378,7 @@ const Chat = () => {
                                 ? 'bg-blue-600 text-white' 
                                 : 'bg-gray-200 text-gray-900'
                             }`}>
-                              <div className="text-sm">{msg.text}</div>
+                              <div className="text-sm">{msg.text || msg.content}</div>
                               <div className={`text-xs mt-1 ${
                                 isOwnMessage ? 'text-blue-200' : 'text-gray-500'
                               }`}>
@@ -406,20 +406,22 @@ const Chat = () => {
               <form onSubmit={handleSend} className="flex gap-2">
                 <input 
                   type="text" 
-                  className="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                  className={`flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    !connected ? 'bg-gray-50' : ''
+                  }`} 
                   value={newMsg} 
                   onChange={e => setNewMsg(e.target.value)} 
-                  placeholder={connected ? "Type a message..." : "Connecting..."}
-                  disabled={loading || !connected} 
+                  placeholder={connected ? "Type a message..." : "Connecting... You can still compose."}
+                  disabled={loading}
                 />
                 <button 
                   className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    loading || !connected || !newMsg.trim()
+                    loading || !newMsg.trim()
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                   type="submit" 
-                  disabled={loading || !connected || !newMsg.trim()}
+                  disabled={loading || !newMsg.trim()}
                 >
                   {loading ? 'Sending...' : 'Send'}
                 </button>
