@@ -6,6 +6,9 @@ import toast from 'react-hot-toast';
 
 const ChatContext = createContext();
 
+// Admin user ID constant
+const ADMIN_USER_ID = 1;
+
 export const useChat = () => {
   const context = useContext(ChatContext);
   if (!context) {
@@ -320,6 +323,13 @@ export const ChatProvider = ({ children }) => {
     setMessages([]);
   };
 
+  // Start conversation with admin
+  const startAdminConversation = async (initialMessage = null) => {
+    return startConversation(ADMIN_USER_ID, initialMessage, {
+      otherUserName: 'Admin Support'
+    });
+  };
+
   const value = {
     conversations,
     selectedConversation,
@@ -331,6 +341,7 @@ export const ChatProvider = ({ children }) => {
     selectConversation,
     sendMessage,
     startConversation,
+    startAdminConversation,
     toggleChat,
     closeChat,
     loadConversations,

@@ -74,6 +74,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/services/subcategories").permitAll()  // Allow public access to subcategories  
                 .requestMatchers("/services/map/**").permitAll()  // Allow public access to map services
                 .requestMatchers("/services/*/reviews").permitAll()  // Allow public access to service reviews
+                .requestMatchers("/users/{id}").permitAll()  // Public access to user profile for chat
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/provider/**").hasAnyRole("PROVIDER", "ADMIN")
                 .requestMatchers("/customer/**").hasAnyRole("CUSTOMER", "ADMIN")

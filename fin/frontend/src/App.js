@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ChatProvider } from './contexts/ChatContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import AdminNavbar from './components/AdminNavbar';
 import ChatMessageModal from './components/ChatMessageModal';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -34,16 +35,22 @@ import AdminInsights from './pages/AdminInsights';
 
 const queryClient = new QueryClient();
 
-// Layout wrapper to conditionally show Navbar
+// Layout wrapper to conditionally show Navbar based on user role
 const LayoutWrapper = ({ children }) => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isChatRoute = location.pathname === '/chat' || location.pathname.startsWith('/chat/');
   
   return (
     <>
-      {!isAdminRoute && <Navbar />}
+      {/* Show AdminNavbar only on /chat route for admin users (admin pages have their own headers) */}
+      {isChatRoute && <AdminNavbar />}
+      
+      {/* Show regular Navbar only for non-admin, non-chat routes */}
+      {!isAdminRoute && !isChatRoute && <Navbar />}
+      
       {children}
-      {!isAdminRoute && <ChatMessageModal />}
+      {!isAdminRoute && !isChatRoute && <ChatMessageModal />}
     </>
   );
 };

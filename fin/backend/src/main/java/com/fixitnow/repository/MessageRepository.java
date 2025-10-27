@@ -47,6 +47,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     @Query("SELECT COUNT(m) FROM Message m WHERE " +
            "m.sender = :sender AND m.receiver = :receiver AND m.isRead = false")
     int countUnreadMessages(@Param("sender") User sender, @Param("receiver") User receiver);
+
+    // Count all unread messages where user is receiver
+    @Query("SELECT COUNT(m) FROM Message m WHERE " +
+           "m.receiver = :receiver AND m.isRead = false")
+    int countUnreadMessagesForUser(@Param("receiver") User receiver);
     
     // Mark messages as read
     @Modifying

@@ -130,6 +130,10 @@ const apiService = {
   getMessages: (conversationId) => apiClient.get(`/messages/conversation/${conversationId}`),
   sendMessage: (messageData) => apiClient.post('/messages', messageData),
   
+  // Admin Chat
+  getAdminConversations: () => apiClient.get('/messages/admin/conversations'),
+  getAdminUnreadCount: () => apiClient.get('/messages/admin/unread-count'),
+
   // New Chat API endpoints
   getChatRooms: (userId) => apiClient.get(`/chat/rooms/${userId}`),
   getRoomMessages: (roomId) => apiClient.get(`/chat/room/${roomId}/messages`),

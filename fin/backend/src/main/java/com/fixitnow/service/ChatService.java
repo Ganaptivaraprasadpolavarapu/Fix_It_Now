@@ -97,6 +97,28 @@ public class ChatService {
         return messageRepository.countUnreadMessages(sender, receiver);
     }
 
+    // Get admin unread message count
+    public int getAdminUnreadMessageCount() {
+        // Admin ID is typically 1 (first admin user)
+        User admin = userRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        // Count all unread messages where admin is receiver
+        return messageRepository.countUnreadMessagesForUser(admin);
+    }
+
+    // Get all conversations with admin (for admin dashboard)
+    public List<ConversationDTO> getAdminConversations() {
+        User admin = userRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        List<Message> conversations = messageRepository.findConversationsForUser(admin);
+        
+        return conversations.stream()
+                .map(msg -> convertToConversationDTO(msg, admin))
+                .collect(Collectors.toList());
+    }
+
     // Helper methods
     private String getConversationId(Long userId1, Long userId2) {
         // Create consistent conversation ID regardless of order

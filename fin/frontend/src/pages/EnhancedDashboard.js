@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useChat } from '../contexts/ChatContext';
 import apiService from '../services/apiService';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { startAdminConversation } = useChat();
   const [stats, setStats] = useState({});
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +45,16 @@ const Dashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMessageAdmin = async () => {
+    try {
+      await startAdminConversation();
+      toast.success('Chat opened with Admin Support');
+    } catch (error) {
+      console.error('Error starting chat with admin:', error);
+      toast.error('Failed to open chat with admin');
     }
   };
 
@@ -140,6 +153,15 @@ const Dashboard = () => {
             <Link to="/profile" className="block w-full bg-gray-100 text-gray-700 text-center py-2 rounded-md hover:bg-gray-200 transition-colors">
               Update Profile
             </Link>
+            <button 
+              onClick={handleMessageAdmin}
+              className="block w-full bg-purple-600 text-white text-center py-2 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Message Admin
+            </button>
           </div>
         </div>
 
@@ -147,7 +169,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
           <div className="space-y-3">
             <p className="text-gray-600 text-sm">
-              Find trusted service providers in your area for all your home repair and maintenance needs.
+              Find trusted service providers in your area for all your home repair and maintenance needs. Need further assistance? Contact our admin support.
             </p>
             <Link to="/help" className="inline-flex items-center text-blue-600 hover:text-blue-800">
               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,6 +259,15 @@ const Dashboard = () => {
             <Link to="/bookings" className="block w-full bg-gray-100 text-gray-700 text-center py-2 rounded-md hover:bg-gray-200 transition-colors">
               View Bookings
             </Link>
+            <button 
+              onClick={handleMessageAdmin}
+              className="block w-full bg-purple-600 text-white text-center py-2 rounded-md hover:bg-purple-700 transition-colors font-medium flex items-center justify-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Message Admin
+            </button>
           </div>
         </div>
 

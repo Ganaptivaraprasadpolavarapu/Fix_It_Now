@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -92,5 +93,33 @@ public class ChatController {
         
         int count = chatService.getUnreadMessageCount(senderId, receiverId);
         return ResponseEntity.ok(Map.of("unreadCount", count));
+    }
+
+    // Get all conversations with admin (for admin dashboard)
+    @GetMapping("/admin/conversations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<ConversationDTO>> getAdminConversations() {
+        try {
+            List<ConversationDTO> conversations = chatService.getAdminConversations();
+            return ResponseEntity.ok(conversations);
+        } catch (Exception e) {
+            System.err.println("Error getting admin conversations: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(List.of());
+        }
+    }
+
+    // Get admin unread message count
+    @GetMapping("/admin/unread-count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Integer>> getAdminUnreadCount() {
+        try {
+            int count = chatService.getAdminUnreadMessageCount();
+            return ResponseEntity.ok(Map.of("unreadCount", count));
+        } catch (Exception e) {
+            System.err.println("Error getting admin unread count: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of("unreadCount", 0));
+        }
     }
 }

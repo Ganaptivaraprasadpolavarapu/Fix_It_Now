@@ -71,6 +71,17 @@ const AdminUsers = () => {
     }
   };
 
+  const handleChatWithUser = async (user) => {
+    try {
+      // Navigate to /chat with userId parameter to auto-select the conversation
+      navigate(`/chat/${user.id}`);
+      toast.success(`Starting conversation with ${user.name}`);
+    } catch (error) {
+      toast.error('Failed to start conversation');
+      console.error('Error starting conversation:', error);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     toast.success('Logged out successfully');
@@ -219,12 +230,24 @@ const AdminUsers = () => {
                         {new Date(user.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          onClick={() => openDeleteModal(user)}
-                          className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm font-medium"
-                        >
-                          🗑️ Delete
-                        </button>
+                        {user.role === 'ADMIN' ? (
+                          <span className="text-xs text-gray-500 italic">No actions available</span>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleChatWithUser(user)}
+                              className="px-3 py-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-sm font-medium"
+                            >
+                              💬 Chat
+                            </button>
+                            <button
+                              onClick={() => openDeleteModal(user)}
+                              className="px-3 py-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors text-sm font-medium"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
