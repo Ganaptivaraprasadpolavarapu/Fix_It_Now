@@ -16,14 +16,29 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      {/* Hero Section with background video */}
+      <section className="relative text-white">
+        {/* Video background - place hero-vid.mp4 in public/ */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <video
+            className="w-full h-full object-cover"
+            src="/hero-vid.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/projects-hero.png"
+          />
+          {/* Dark overlay to improve text contrast with a subtle backdrop blur for video  backdrop-blur-sm  */}
+          <div className="absolute inset-0 bg-black/80 md:bg-black/70 " /> 
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 drop-shadow-md">
               {isProvider() ? "Grow Your Service Business" : "Find Local Service Providers"}
             </h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto drop-shadow-sm">
               {isProvider() 
                 ? "Connect with customers in your neighborhood and showcase your professional services" 
                 : "Connect with trusted electricians, plumbers, carpenters, and more in your neighborhood"
@@ -67,7 +82,15 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+      <section
+        className="py-16 bg-white relative"
+        style={{
+          backgroundImage: "url('/wave-features.svg')",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'top center',
+          backgroundSize: 'cover',
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -148,7 +171,15 @@ const Home = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-gray-50">
+      <section
+        className="py-16 bg-gray-50 relative"
+        style={{
+          backgroundImage: "url('/wave-categories.svg')",
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'bottom center',
+          backgroundSize: 'cover',
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -194,14 +225,23 @@ const Home = () => {
       <section className="py-16 bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {isProvider() ? "Start Growing Your Business!" : "Ready to Get Started?"}
+            {isProvider()
+              ? "Start Growing Your Business!"
+              : user
+              ? "Find Trusted Local Services"
+              : "Ready to Get Started?"
+            }
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            {isProvider() 
-              ? "List your first service and connect with customers in your area" 
+            {isProvider()
+              ? "List your first service and connect with customers in your area"
+              : user
+              ? "Browse verified service providers nearby and book instantly"
               : "Join thousands of satisfied customers and service providers on our platform"
             }
           </p>
+
+          {/* Buttons: guest, provider, or logged-in customer */}
           {!user ? (
             <div className="space-x-4">
               <Link to="/register?role=customer" className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
@@ -220,7 +260,16 @@ const Home = () => {
                 📊 Go to Dashboard
               </Link>
             </div>
-          ) : null}
+          ) : (
+            <div className="space-x-4">
+              <Link to="/services-map" className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+                Browse Services
+              </Link>
+              {/* <Link to="/bookings" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+                📋 My Bookings
+              </Link> */}
+            </div>
+          )}
         </div>
       </section>
     </div>
