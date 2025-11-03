@@ -66,6 +66,7 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/public/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()  // Public access to uploaded files
                 .requestMatchers("/api/messages/**").permitAll()  // MOVED TO TOP FOR PRIORITY
                 .requestMatchers("/ws/**").permitAll()
                 // Public access to service browsing (before authentication)
@@ -79,6 +80,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/provider/**").hasAnyRole("PROVIDER", "ADMIN")
                 .requestMatchers("/customer/**").hasAnyRole("CUSTOMER", "ADMIN")
                 // Protected endpoints (require authentication)
+                .requestMatchers("/upload").authenticated()  // File upload requires authentication
                 .requestMatchers("/bookings/**").authenticated()
                 .requestMatchers("/reviews").authenticated()  // Creating reviews requires auth
                 .requestMatchers("/users/**").authenticated()

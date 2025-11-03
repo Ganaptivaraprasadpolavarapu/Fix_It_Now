@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import apiService from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
+  const { updateUser } = useAuth();
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
@@ -10,27 +12,46 @@ const Profile = () => {
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(''); // 'success' or 'error'
 
   useEffect(() => {
     apiService.getCurrentUser()
       .then(res => {
+        console.log('User data received:', res.data);
+        const avatarUrl = res.data.avatarUrl || res.data.profileImage;
+        console.log('Avatar URL:', avatarUrl);
         setUser(res.data);
         setForm({ name: res.data.name, email: res.data.email, phone: res.data.phone || '' });
-        setAvatarPreview(res.data.avatarUrl);
+        setAvatarPreview(avatarUrl);
       })
-      .catch(() => setMessage('Failed to load profile.'));
+      .catch(() => {
+        setMessage('Failed to load profile.');
+        setMessageType('error');
+      });
   }, []);
 
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => {
     setEditMode(false);
     setForm({ name: user.name, email: user.email, phone: user.phone || '' });
-    setAvatarPreview(user.avatarUrl);
+    const avatarUrl = user.avatarUrl || user.profileImage;
+    setAvatarPreview(avatarUrl);
     setAvatar(null);
     setMessage('');
+    setMessageType('');
+  };
+
+  const getAvatarUrl = (url) => {
+    if (!url) return '/default-avatar.svg';
+    // If URL starts with http, use as is
+    if (url.startsWith('http')) return url;
+    // If URL is relative, prepend API base URL
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+    return `${apiBase}${url}`;
   };
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+
   const handleAvatarChange = e => {
     const file = e.target.files[0];
     setAvatar(file);
@@ -40,17 +61,29 @@ const Profile = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      let avatarUrl = user.avatarUrl;
+      let avatarUrl = user.avatarUrl || user.profileImage;
       if (avatar) {
         const res = await apiService.uploadFile(avatar, 'avatar');
         avatarUrl = res.data.url;
+        console.log('Avatar uploaded, URL:', avatarUrl);
       }
+      console.log('Updating user profile with avatarUrl:', avatarUrl);
       await apiService.updateUserProfile(user.id, { ...form, avatarUrl });
-      setUser({ ...user, ...form, avatarUrl });
+      
+      // Update local state immediately - this syncs with AuthContext
+      const updatedUser = { ...user, ...form, avatarUrl };
+      setUser(updatedUser);
+      setAvatarPreview(avatarUrl);
+      updateUser(updatedUser);
+      
       setEditMode(false);
+      setAvatar(null);
       setMessage('Profile updated successfully.');
+      setMessageType('success');
     } catch (err) {
+      console.error('Error updating profile:', err);
       setMessage('Failed to update profile.');
+      setMessageType('error');
     }
     setLoading(false);
   };
@@ -61,6 +94,7 @@ const Profile = () => {
     setMessage('');
     if (passwords.new !== passwords.confirm) {
       setMessage('New passwords do not match.');
+      setMessageType('error');
       setLoading(false);
       return;
     }
@@ -68,9 +102,11 @@ const Profile = () => {
       // You may need to implement this endpoint in backend: /users/:id/password
       await apiService.updateUserProfile(user.id, { password: passwords.new, currentPassword: passwords.current });
       setMessage('Password changed successfully.');
+      setMessageType('success');
       setPasswords({ current: '', new: '', confirm: '' });
     } catch (err) {
       setMessage('Failed to change password.');
+      setMessageType('error');
     }
     setLoading(false);
   };
@@ -82,10 +118,16 @@ const Profile = () => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Profile</h1>
-      {message && <div className="mb-4 text-center text-red-500">{message}</div>}
+      {message && (
+        <div className={`mb-4 p-3 rounded text-center font-semibold ${
+          messageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`}>
+          {message}
+        </div>
+      )}
       <div className="bg-white shadow rounded-lg p-6 mb-6">
         <div className="flex items-center mb-4">
-          <img src={avatarPreview || '/default-avatar.png'} alt="Avatar" className="w-20 h-20 rounded-full object-cover mr-4" />
+          <img src={getAvatarUrl(avatarPreview)} alt="Avatar" className="w-20 h-20 rounded-full object-cover mr-4" />
           <div>
             <div className="font-semibold text-lg">{user.name}</div>
             <div className="text-gray-600">{user.email}</div>

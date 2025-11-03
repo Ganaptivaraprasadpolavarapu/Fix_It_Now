@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,7 @@ import com.fixitnow.repository.ServiceRepository;
 import com.fixitnow.repository.UserRepository;
 
 // @Component - DISABLED: User will create services manually as needed
-public class DataInitializationService implements CommandLineRunner {
+public class DataInitializationService {
 
     @Autowired
     private UserRepository userRepository;
@@ -27,22 +26,8 @@ public class DataInitializationService implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Override
-    public void run(String... args) throws Exception {
-        // Initialize sample data if no services exist (regardless of users)
-        long serviceCount = serviceRepository.count();
-        System.out.println("Current service count: " + serviceCount);
-        
-        if (serviceCount == 0) {
-            System.out.println("Initializing sample data for FixItNow application...");
-            createSampleProviders();
-            createSampleServices();
-            System.out.println("Sample data initialization completed successfully!");
-            System.out.println("New service count: " + serviceRepository.count());
-        } else {
-            System.out.println("Database already contains " + serviceCount + " services. Skipping initialization.");
-        }
-    }
+    // Initialization method removed - was previously run by CommandLineRunner
+    // This class is now just a utility class for manual data initialization if needed
 
     private void createSampleProviders() {
         List<User> providers = Arrays.asList(

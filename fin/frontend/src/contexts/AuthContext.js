@@ -67,6 +67,23 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedUserData) => {
+    const merged = { ...user, ...updatedUserData };
+    setUser(merged);
+    localStorage.setItem('user', JSON.stringify(merged));
+  };
+
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      updateUser(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+      return null;
+    }
+  };
+
   // Helper functions for role checking
   const isProvider = () => user?.role?.toUpperCase() === 'PROVIDER';
   const isCustomer = () => user?.role?.toUpperCase() === 'CUSTOMER';
@@ -78,6 +95,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
+    refreshUser,
     loading,
     isProvider,
     isCustomer,

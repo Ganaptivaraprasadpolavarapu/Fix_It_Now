@@ -2,6 +2,8 @@ package com.fixitnow.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +24,9 @@ import com.fixitnow.dto.JwtResponse;
 import com.fixitnow.dto.LoginRequest;
 import com.fixitnow.dto.SignupRequest;
 import com.fixitnow.model.User;
+import com.fixitnow.model.PasswordResetToken;
 import com.fixitnow.repository.UserRepository;
+import com.fixitnow.repository.PasswordResetTokenRepository;
 import com.fixitnow.security.JwtUtils;
 import com.fixitnow.security.UserPrincipal;
 
@@ -37,6 +41,9 @@ public class AuthController {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
     PasswordEncoder encoder;
@@ -65,8 +72,20 @@ public class AuthController {
             String jwt = jwtUtils.generateJwtToken(user.getEmail(), user.getRole().name());
             String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
 
-            return ResponseEntity.ok(new JwtResponse(jwt, refreshToken, user.getId(), 
-                    user.getName(), user.getEmail(), user.getRole().name(), user.getLocation()));
+            Map<String, Object> response = new HashMap<>();
+            response.put("accessToken", jwt);
+            response.put("refreshToken", refreshToken);
+            response.put("type", "Bearer");
+            response.put("id", user.getId());
+            response.put("name", user.getName());
+            response.put("email", user.getEmail());
+            response.put("role", user.getRole().name());
+            response.put("location", user.getLocation());
+            response.put("phone", user.getPhone());
+            response.put("profileImage", user.getProfileImage());
+            response.put("avatarUrl", user.getProfileImage());
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Invalid credentials");
@@ -193,11 +212,145 @@ public class AuthController {
             response.put("email", user.getEmail());
             response.put("role", user.getRole().name());
             response.put("location", user.getLocation());
+            response.put("phone", user.getPhone());
+            response.put("profileImage", user.getProfileImage());
+            response.put("avatarUrl", user.getProfileImage()); // Also include as avatarUrl for compatibility
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", "Error fetching user: " + e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            
+            if (email == null || email.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Email is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+            // Generate unique token
+            String token = UUID.randomUUID().toString();
+            
+            // Token expires in 24 hours
+            LocalDateTime expiryTime = LocalDateTime.now().plusHours(24);
+
+            // Delete any existing unused tokens for this user
+            passwordResetTokenRepository.findByUserAndUsedFalse(user).ifPresent(
+                existingToken -> passwordResetTokenRepository.delete(existingToken)
+            );
+
+            // Create and save new reset token
+            PasswordResetToken resetToken = new PasswordResetToken(token, user, expiryTime);
+            passwordResetTokenRepository.save(resetToken);
+
+            // In production, you would send this token via email
+            System.out.println("DEBUG: Password reset token created for " + email + ": " + token);
+            System.out.println("DEBUG: Token expires at: " + expiryTime);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Password reset token sent to your email");
+            response.put("token", token); // In production, don't return this; send via email only
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error creating password reset token: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String token = request.get("token");
+            String newPassword = request.get("newPassword");
+
+            // Validation
+            if (email == null || email.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Email is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            if (token == null || token.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Reset token is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "New password is required");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            if (newPassword.length() < 6) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Password must be at least 6 characters");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Find the reset token
+            PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                    .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+
+            // Check if token is expired
+            if (resetToken.isExpired()) {
+                passwordResetTokenRepository.delete(resetToken);
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Reset token has expired");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Check if token has already been used
+            if (resetToken.getUsed()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Reset token has already been used");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Verify email matches
+            if (!resetToken.getUser().getEmail().equals(email)) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Email does not match reset token");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            // Update user password
+            User user = resetToken.getUser();
+            user.setPassword(encoder.encode(newPassword));
+            userRepository.save(user);
+
+            // Mark token as used
+            resetToken.setUsed(true);
+            passwordResetTokenRepository.save(resetToken);
+
+            System.out.println("DEBUG: Password reset successful for user: " + email);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Password reset successfully! You can now login with your new password.");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            System.err.println("Error resetting password: " + e.getMessage());
+            e.printStackTrace();
+            
+            Map<String, String> error = new HashMap<>();
+            error.put("message", "Error: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }

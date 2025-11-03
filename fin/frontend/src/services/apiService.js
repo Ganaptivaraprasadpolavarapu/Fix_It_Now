@@ -23,6 +23,12 @@ apiClient.interceptors.request.use(
     } else {
       console.warn('No token found in localStorage');
     }
+    
+    // Don't override Content-Type for FormData (multipart/form-data)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -74,6 +80,8 @@ const apiService = {
   adminRegister: (userData) => apiClient.post('/auth/admin-register', userData),
   getCurrentUser: () => apiClient.get('/auth/me'),
   debugCurrentUser: () => apiClient.get('/auth/me'),
+  forgotPassword: (email) => apiClient.post('/auth/forgot-password', { email }),
+  resetPassword: (data) => apiClient.post('/auth/reset-password', data),
 
   // Services
   getAllServices: (params) => apiClient.get('/services', { params }),
@@ -150,11 +158,8 @@ const apiService = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return apiClient.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Don't explicitly set Content-Type header - let axios/browser handle it with correct boundary
+    return apiClient.post('/upload', formData);
   },
 
   // Notifications

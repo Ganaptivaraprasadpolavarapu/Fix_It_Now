@@ -9,6 +9,21 @@ const Navbar = () => {
   const { totalUnreadCount, toggleChat } = useChat();
   const navigate = useNavigate();
 
+  const getAvatarUrl = (avatarPath) => {
+    if (!avatarPath) {
+      console.log('DEBUG: No avatar path, using default');
+      return '/default-avatar.svg';
+    }
+    if (avatarPath.startsWith('http')) {
+      console.log('DEBUG: Avatar path is already full URL:', avatarPath);
+      return avatarPath;
+    }
+    const apiBase = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+    const fullUrl = `${apiBase}${avatarPath}`;
+    console.log('DEBUG: Avatar path:', avatarPath, '-> Full URL:', fullUrl);
+    return fullUrl;
+  };
+
   const handleLogout = () => {
     logout();
     toast.success('Logged out successfully');
@@ -79,19 +94,31 @@ const Navbar = () => {
                     </span>
                   )}
                 </button>
-                <Link
-                  to="/profile"
-                  className="text-gray-900 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Profile
-                </Link>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">Welcome, {user.name}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                    isProvider() ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {user.role}
-                  </span>
+                <div className="flex items-center space-x-3">
+                  <div className="hidden sm:flex flex-col items-end">
+                    <span className="text-sm text-gray-900 font-medium">{user.name}</span>
+                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                      isProvider() ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="relative group"
+                    title="View Profile"
+                  >
+                    <img
+                      src={getAvatarUrl(user.profileImage || user.avatarUrl)}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 hover:border-primary-600 transition-all"
+                      onLoad={() => console.log('DEBUG: Avatar image loaded successfully')}
+                      onError={(e) => {
+                        console.error('DEBUG: Avatar image failed to load. Src was:', e.target.src);
+                        e.target.src = '/default-avatar.svg';
+                      }}
+                    />
+                  </Link>
                 </div>
                 <button
                   onClick={handleLogout}
